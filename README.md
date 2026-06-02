@@ -151,4 +151,4 @@ CIGAR ops that consume reference and contribute to depth: `M`, `=`, `X`, `D`. CI
 
 ## License
 
-MIT.
+Attribution-NonCommercial-NoDerivatives 4.0 International
