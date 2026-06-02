@@ -1,0 +1,6 @@
+# Build for the host CPU so LLVM can use AVX2/BMI/etc. for auto-vectorized
+# loops (bin reduction, add_interval) and so libdeflate picks the widest
+# SIMD path available. Override by setting CARGO_BUILD_RUSTFLAGS or by
+# editing this file when producing portable release binaries.
+[build]
+rustflags = ["-C", "target-cpu=native"]
