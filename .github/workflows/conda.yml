@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # needed to upload assets to the GitHub Release on tag builds
 
 jobs:
   build:
@@ -28,9 +28,24 @@ jobs:
         run: |
           rattler-build build --recipe recipe.yaml --output-dir output
 
-      - name: Upload conda package
+      - name: Upload conda package (workflow artifact)
         uses: actions/upload-artifact@v4
         with:
           name: sedum-conda-linux-64
           path: output/**/*.conda
           if-no-files-found: error
+
+      - name: Attach conda package to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          mapfile -t pkgs < <(find output -name '*.conda')
+          if [ "${#pkgs[@]}" -eq 0 ]; then
+            echo "no .conda packages found"
+            exit 1
+          fi
+          echo "uploading: ${pkgs[*]} -> release $tag"
+          # --clobber so re-runs on the same tag overwrite cleanly.
+          gh release upload "$tag" "${pkgs[@]}" --clobber
