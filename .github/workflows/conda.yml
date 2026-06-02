@@ -1,0 +1,36 @@
+name: conda
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: rattler-build (linux-64)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rattler-build
+        run: |
+          curl -L -o rattler-build https://github.com/prefix-dev/rattler-build/releases/latest/download/rattler-build-x86_64-unknown-linux-musl
+          chmod +x rattler-build
+          sudo mv rattler-build /usr/local/bin/
+
+      - name: Build package
+        env:
+          CARGO_BUILD_RUSTFLAGS: ""
+        run: |
+          rattler-build build --recipe recipe.yaml --output-dir output
+
+      - name: Upload conda package
+        uses: actions/upload-artifact@v4
+        with:
+          name: sedum-conda-linux-64
+          path: output/**/*.conda
+          if-no-files-found: error

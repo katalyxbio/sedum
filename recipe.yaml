@@ -1,0 +1,50 @@
+context:
+  name: sedum
+  version: "0.1.0"
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  path: .
+
+build:
+  number: 0
+  script:
+    # Disable the host-tuned RUSTFLAGS from .cargo/config.toml so the conda
+    # package is portable across the channel's target microarchitecture.
+    - if: unix
+      then: |
+        export CARGO_BUILD_RUSTFLAGS=""
+        export CARGO_NET_GIT_FETCH_WITH_CLI=true
+        cargo install --locked --no-track --root "${PREFIX}" --path .
+
+requirements:
+  build:
+    - ${{ compiler('rust') }}
+    - ${{ compiler('c') }}
+    - cmake
+    - make
+  host: []
+  run: []
+
+tests:
+  - script:
+      - sedum --help
+      - sedum --version
+
+about:
+  homepage: https://github.com/katalyxbio/sedum
+  repository: https://github.com/katalyxbio/sedum
+  summary: Fast, parallel per-bin depth calculator for BAM/SAM
+  description: |
+    Sedum reads an indexed BAM, partitions the genome into stripes, and scans
+    each stripe on its own worker thread with a private bin accumulator,
+    producing per-bin mean depth (BED) and per-chromosome summary statistics.
+  license: MIT
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - katalyxbio
