@@ -46,3 +46,8 @@ codegen-units = 1
 opt-level = 3
 debug = false
 panic = "abort"
+
+# Profile used by cargo-dist for release artifacts. Inherits from release so
+# the binary characteristics match `cargo build --release` locally.
+[profile.dist]
+inherits = "release"
