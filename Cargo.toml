@@ -1,0 +1,28 @@
+[package]
+name = "sedum"
+version = "0.1.0"
+edition = "2021"
+description = "Fast, parallel per-bin depth calculator for BAM/SAM"
+license = "MIT"
+
+[features]
+default = ["libdeflate"]
+# Use libdeflate (SSE2/AVX2-accelerated) for BGZF inflate instead of miniz_oxide.
+libdeflate = ["noodles-bgzf/libdeflate"]
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+flate2 = "1"
+noodles-bam = "0.74"
+noodles-bgzf = "0.36"
+noodles-core = "0.16"
+noodles-sam = "0.70"
+num_cpus = "1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+debug = false
+panic = "abort"
