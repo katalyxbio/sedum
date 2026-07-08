@@ -47,6 +47,11 @@ pub struct Cli {
     /// Disable the live progress line on stderr.
     #[arg(long, default_value_t = false)]
     pub no_progress: bool,
+
+    /// Print a detailed debug report after the run: per-phase timings,
+    /// throughput, filter breakdown, input sizes, and peak memory.
+    #[arg(long, default_value_t = false)]
+    pub debug_stats: bool,
 }
 
 impl Cli {
