@@ -19,7 +19,7 @@ pub fn scan_single_threaded(
     filter: &Filter,
     progress: &Progress,
 ) -> Result<(Header, BinMatrix, ScanCounters)> {
-    let mut reader = bam::io::reader::Builder::default()
+    let mut reader = bam::io::reader::Builder
         .build_from_path(path)
         .with_context(|| format!("opening BAM {}", path.display()))?;
     let header = reader.read_header().context("reading BAM header")?;

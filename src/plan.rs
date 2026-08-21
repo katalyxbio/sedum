@@ -12,11 +12,7 @@ pub struct Region {
     pub end: u32,
 }
 
-pub fn plan(
-    ref_seqs: &[(String, u32)],
-    threads: usize,
-    stripes_per_thread: usize,
-) -> Vec<Region> {
+pub fn plan(ref_seqs: &[(String, u32)], threads: usize, stripes_per_thread: usize) -> Vec<Region> {
     let threads = threads.max(1);
     let spt = stripes_per_thread.max(1);
     let total: u64 = ref_seqs.iter().map(|(_, l)| *l as u64).sum();
@@ -24,7 +20,7 @@ pub fn plan(
     let stripe_size = if total == 0 {
         1
     } else {
-        ((total + target_stripes - 1) / target_stripes).max(1) as u32
+        total.div_ceil(target_stripes).max(1) as u32
     };
 
     let mut out = Vec::new();
@@ -57,8 +53,7 @@ mod tests {
         let regions = plan(&refs, 4, 4);
         // Per ref, stripes must be contiguous, non-overlapping, covering [0, length).
         for (rid, (_, len)) in refs.iter().enumerate() {
-            let mut stripes: Vec<&Region> =
-                regions.iter().filter(|r| r.ref_id == rid).collect();
+            let mut stripes: Vec<&Region> = regions.iter().filter(|r| r.ref_id == rid).collect();
             stripes.sort_by_key(|r| r.start);
             assert_eq!(stripes.first().unwrap().start, 0);
             assert_eq!(stripes.last().unwrap().end, *len);
