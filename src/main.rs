@@ -1,6 +1,7 @@
 mod bins;
 mod cigar;
 mod cli;
+mod debug;
 mod filters;
 mod plan;
 mod progress;
@@ -40,13 +41,18 @@ fn run(args: cli::Cli) -> Result<()> {
     } else {
         eprintln!("  scan         single-threaded");
     }
-    eprintln!("  output       {}.bins.bed, {}.summary.tsv", args.output_prefix, args.output_prefix);
+    eprintln!(
+        "  output       {}.bins.bed, {}.summary.tsv",
+        args.output_prefix, args.output_prefix
+    );
     eprintln!();
 
     let prog = progress::Progress::new(!args.no_progress);
     let reporter = progress::Reporter::spawn(std::sync::Arc::clone(&prog));
 
-    let (header, matrix) = if use_parallel {
+    let cpu_before = debug::cpu_time();
+    let scan_start = std::time::Instant::now();
+    let (header, matrix, counters) = if use_parallel {
         reader::scan_parallel(
             &args.bam,
             args.bin_size,
@@ -58,15 +64,50 @@ fn run(args: cli::Cli) -> Result<()> {
     } else {
         reader::scan_single_threaded(&args.bam, args.bin_size, &filter, &prog)?
     };
+    let scan_elapsed = scan_start.elapsed();
+    let scan_cpu = match (cpu_before, debug::cpu_time()) {
+        (Some(before), Some(after)) => after.checked_sub(before),
+        _ => None,
+    };
 
     drop(reporter); // flushes the final progress line before we start writing.
 
+    let summarize_start = std::time::Instant::now();
     let summary = stats::summarize(&header, &matrix, args.bin_size);
+    let summarize_elapsed = summarize_start.elapsed();
+
+    let write_start = std::time::Instant::now();
     writer::write_bins(&args.output_prefix, &header, &matrix, args.bin_size)?;
     writer::write_summary(&args.output_prefix, &summary)?;
+    let write_elapsed = write_start.elapsed();
 
     print_final_summary(&summary, started.elapsed());
+
+    if args.debug_stats {
+        let report = debug::DebugReport {
+            bam_path: &args.bam,
+            bam_bytes: file_size(&args.bam),
+            bai_bytes: find_bai(&args.bam).as_deref().and_then(file_size),
+            parallel: use_parallel,
+            threads,
+            stripes: prog
+                .stripes_total
+                .load(std::sync::atomic::Ordering::Relaxed),
+            bin_size: args.bin_size,
+            counters,
+            scan: scan_elapsed,
+            scan_cpu,
+            summarize: summarize_elapsed,
+            write: write_elapsed,
+            total: started.elapsed(),
+        };
+        debug::print_report(&report);
+    }
     Ok(())
+}
+
+fn file_size(path: &std::path::Path) -> Option<u64> {
+    std::fs::metadata(path).ok().map(|m| m.len())
 }
 
 fn print_final_summary(summary: &stats::Summary, elapsed: std::time::Duration) {
@@ -103,6 +144,11 @@ fn print_final_summary(summary: &stats::Summary, elapsed: std::time::Duration) {
 }
 
 fn bai_present(bam: &std::path::Path) -> bool {
+    find_bai(bam).is_some()
+}
+
+/// Locate the BAI index for `bam`: either `<bam>.bai` or `<stem>.bai`.
+fn find_bai(bam: &std::path::Path) -> Option<std::path::PathBuf> {
     let with_ext = {
         let mut p = bam.to_path_buf();
         let new_ext = match p.extension().and_then(|e| e.to_str()) {
@@ -112,6 +158,12 @@ fn bai_present(bam: &std::path::Path) -> bool {
         p.set_extension(new_ext);
         p
     };
+    if with_ext.exists() {
+        return Some(with_ext);
+    }
     let sibling = bam.with_extension("bai");
-    with_ext.exists() || sibling.exists()
+    if sibling.exists() {
+        return Some(sibling);
+    }
+    None
 }

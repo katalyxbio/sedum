@@ -31,11 +31,13 @@ cargo build --release
 # binary at target/release/sedum
 ```
 
-The build uses libdeflate for BGZF decompression and `-C target-cpu=native` for the host CPU. To produce a portable binary:
+By default the build uses libdeflate for BGZF decompression (via the `libdeflater` crate, which vendors and builds libdeflate — no system library required) and `-C target-cpu=native` for the host CPU. To produce a portable binary, drop both:
 
 ```bash
 RUSTFLAGS="" cargo build --release --no-default-features
 ```
+
+`--no-default-features` disables the `libdeflate` feature and falls back to the pure-Rust miniz_oxide decoder: portable, but noticeably slower on the scan.
 
 ## Usage
 

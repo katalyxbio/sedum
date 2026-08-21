@@ -3,7 +3,7 @@ name = "sedum"
 version = "0.1.0"
 edition = "2021"
 description = "Fast, parallel per-bin depth calculator for BAM/SAM"
-license = "MIT"
+license = "CC-BY-NC-ND-4.0"
 repository = "https://github.com/katalyxbio/sedum"
 publish = false
 
@@ -33,9 +33,14 @@ libdeflate = ["noodles-bgzf/libdeflate"]
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
-flate2 = "1"
+libc = "0.2"
 noodles-bam = "0.74"
-noodles-bgzf = "0.36"
+# Must match the noodles-bgzf version that noodles-bam depends on (^0.35) so
+# Cargo unifies them into ONE instance; our `libdeflate` feature then applies
+# to the crate noodles-bam actually decompresses through. A mismatched version
+# (e.g. 0.36) creates a second, unused instance and silently falls back to the
+# pure-Rust miniz_oxide decoder for the real BAM reads.
+noodles-bgzf = "0.35"
 noodles-core = "0.16"
 noodles-sam = "0.70"
 num_cpus = "1"
