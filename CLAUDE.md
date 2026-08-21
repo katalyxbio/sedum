@@ -38,7 +38,7 @@ The pipeline is a fan-out/reduce over genomic stripes. Data flows `main.rs` → 
 - **`reader.rs`** — the core. `scan_parallel` spawns N threads (via `std::thread::scope`) that pop `Region`s off a shared `Mutex<Vec<Region>>` work queue (LIFO). **Each worker opens its own `IndexedReader`** (independent BGZF stream) and accumulates into a **private `BinMatrix` shard**. Shards are summed element-wise in a final reduction. `process_record` applies the filter, then walks the CIGAR into bin increments.
 - **`bins.rs`** — `BinMatrix` / `RefBins`: `counts[i]` = total aligned reference bases landing in bin `i` (summed depth, not per-base). `add_interval` distributes an interval across overlapping bins, clipping at chromosome end.
 - **`cigar.rs`** — `visit_ref_intervals` emits reference-consuming intervals. `M`/`=`/`X`/`D` contribute; `N` (skip) only with `--count-splice`; `I`/`S`/`H`/`P` never do.
-- **`filters.rs`** — `Filter::keep(flags, mapq)`: `(flags & exclude)==0 && (flags & include)==include && mapq >= min_mapq`. `Copy` so it's cheaply shared across threads.
+- **`filters.rs`** — `Filter::flags_ok(flags)` (`(flags & exclude)==0 && (flags & include)==include`) and `Filter::mapq_ok(mapq)` (`mapq >= min_mapq`), kept as two predicates so `process_record` can attribute each rejection to its own `ScanCounters` bucket. `Copy` so it's cheaply shared across threads.
 - **`stats.rs`** — `summarize` computes per-ref and total min/max/mean/median/stdev + breadth at 1/5/10/20/30x. Mean depth uses total aligned bases / reference length; per-bin depth uses each bin's actual span (last bin may be short).
 - **`progress.rs`** — atomic counters (Relaxed) batched every `RECORD_BATCH` (4096) records; a `Reporter` thread renders the live stderr line and is dropped before writing to flush.
 - **`debug.rs`** — `--debug-stats` support: `ScanCounters` (filter-reason breakdown + bases, always collected, summed across worker shards), `memory_usage()` (peak/current RSS from `/proc/self/status`, Linux-only), `cpu_time()` (cumulative user+system across all threads via `getrusage`, unix-only — `main::run` samples it around the scan to report cores-busy and diagnose CPU- vs IO-bound scans), and `print_report`. `main::run` times each phase (scan/summarize/write) and prints the report only when the flag is set. Note: in parallel mode `records_visited` counts per-stripe query hits, so a read overlapping N stripes is visited N times — the extra visits show up as `out_of_stripe`; `kept` and `aligned_bases` are the true totals.
@@ -51,6 +51,6 @@ Memory scales with thread count (one `BinMatrix` shard per worker, ~50 MB/worker
 
 ## Notes
 
-- `Cargo.toml` still declares `license = "MIT"`, but the project relicensed to **CC BY-NC-ND 4.0** (see README/LICENSE and recent commit). Treat the LICENSE file as authoritative.
+- Licensed **CC BY-NC-ND 4.0** (`license = "CC-BY-NC-ND-4.0"` in `Cargo.toml`, matching README/LICENSE). The LICENSE file is authoritative. `publish = false` — this is a private repo and cargo-dist is configured with no publish jobs.
 - Not yet implemented (mentioned in README as planned): CRAM support, `--regions BED`. SAM and index-less BAM force the single-threaded path.
 - `PLAN.md` holds the original design doc.

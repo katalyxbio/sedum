@@ -162,8 +162,8 @@ pub fn print_report(r: &DebugReport) {
         c.records_visited as f64 / scan_s
     );
     eprintln!(
-        "  aligned bases        {}/s",
-        human_bytes((c.aligned_bases as f64 / scan_s) as u64)
+        "  aligned bases        {} bases/s",
+        human_count((c.aligned_bases as f64 / scan_s) as u64)
     );
     if let Some(bytes) = r.bam_bytes {
         eprintln!(
@@ -205,6 +205,22 @@ fn opt_bytes(b: Option<u64>) -> String {
         Some(n) => human_bytes(n),
         None => "unknown".to_string(),
     }
+}
+
+/// Format a plain count with decimal SI suffixes. Distinct from `human_bytes`
+/// so base counts aren't rendered in KiB/MiB and misread as byte throughput.
+fn human_count(n: u64) -> String {
+    const UNITS: [&str; 5] = ["", "K", "M", "G", "T"];
+    if n < 1000 {
+        return n.to_string();
+    }
+    let mut v = n as f64;
+    let mut i = 0;
+    while v >= 1000.0 && i < UNITS.len() - 1 {
+        v /= 1000.0;
+        i += 1;
+    }
+    format!("{v:.2}{}", UNITS[i])
 }
 
 fn human_bytes(n: u64) -> String {

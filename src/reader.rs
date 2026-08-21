@@ -167,11 +167,11 @@ fn process_record(
 ) {
     counters.records_visited += 1;
     let flags = u16::from(record.flags());
-    let mapq = record.mapping_quality().map(u8::from).unwrap_or(0);
     if !filter.flags_ok(flags) {
         counters.filtered_flags += 1;
         return;
     }
+    let mapq = record.mapping_quality().map(u8::from).unwrap_or(0);
     if !filter.mapq_ok(mapq) {
         counters.filtered_mapq += 1;
         return;

@@ -3,7 +3,7 @@ name = "sedum"
 version = "0.1.0"
 edition = "2021"
 description = "Fast, parallel per-bin depth calculator for BAM/SAM"
-license = "MIT"
+license = "CC-BY-NC-ND-4.0"
 repository = "https://github.com/katalyxbio/sedum"
 publish = false
 

@@ -41,7 +41,10 @@ fn run(args: cli::Cli) -> Result<()> {
     } else {
         eprintln!("  scan         single-threaded");
     }
-    eprintln!("  output       {}.bins.bed, {}.summary.tsv", args.output_prefix, args.output_prefix);
+    eprintln!(
+        "  output       {}.bins.bed, {}.summary.tsv",
+        args.output_prefix, args.output_prefix
+    );
     eprintln!();
 
     let prog = progress::Progress::new(!args.no_progress);
@@ -87,7 +90,9 @@ fn run(args: cli::Cli) -> Result<()> {
             bai_bytes: find_bai(&args.bam).as_deref().and_then(file_size),
             parallel: use_parallel,
             threads,
-            stripes: prog.stripes_total.load(std::sync::atomic::Ordering::Relaxed),
+            stripes: prog
+                .stripes_total
+                .load(std::sync::atomic::Ordering::Relaxed),
             bin_size: args.bin_size,
             counters,
             scan: scan_elapsed,
