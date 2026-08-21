@@ -68,6 +68,9 @@ impl Drop for Reporter {
     fn drop(&mut self) {
         self.progress.stop.store(true, Ordering::Relaxed);
         if let Some(h) = self.handle.take() {
+            // Wake the reporter immediately instead of waiting out its current
+            // sleep interval (up to 5s when stderr is not a TTY).
+            h.thread().unpark();
             let _ = h.join();
         }
         if !self.progress.enabled {
@@ -103,8 +106,9 @@ fn run(p: Arc<Progress>) {
         Duration::from_secs(5)
     };
     let cr = if tty { '\r' } else { '\n' };
-    // Brief initial delay so we don't print before any work has happened.
-    thread::sleep(Duration::from_millis(100));
+    // Brief initial delay so we don't print before any work has happened
+    // (park_timeout so a quick run can wake us out of it on shutdown).
+    thread::park_timeout(Duration::from_millis(100));
     while !p.stop.load(Ordering::Relaxed) {
         let elapsed = p.start.elapsed().as_secs_f64().max(1e-9);
         let records = p.records.load(Ordering::Relaxed);
@@ -134,6 +138,8 @@ fn run(p: Arc<Progress>) {
         }
         let _ = err.flush();
         drop(err);
-        thread::sleep(interval);
+        // park_timeout instead of sleep so `drop` can wake us instantly via
+        // unpark; a spurious wakeup just re-checks `stop` and reprints.
+        thread::park_timeout(interval);
     }
 }
