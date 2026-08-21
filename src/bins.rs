@@ -18,7 +18,7 @@ impl BinMatrix {
         let refs = reference_lengths
             .iter()
             .map(|&len| {
-                let n = ((len as u64 + bin_size as u64 - 1) / bin_size as u64) as usize;
+                let n = (len as u64).div_ceil(bin_size as u64) as usize;
                 RefBins {
                     length: len,
                     counts: vec![0u64; n],
