@@ -43,7 +43,12 @@ pub fn summarize(header: &Header, matrix: &BinMatrix, bin_size: u32) -> Summary 
         total_bins.extend_from_slice(&rb.counts);
         total_len += rb.length as u64;
     }
-    let total = ref_summary("total", total_len.min(u32::MAX as u64) as u32, &total_bins, bin_size);
+    let total = ref_summary(
+        "total",
+        total_len.min(u32::MAX as u64) as u32,
+        &total_bins,
+        bin_size,
+    );
 
     Summary { per_ref, total }
 }
@@ -74,7 +79,11 @@ fn ref_summary(name: &str, length: u32, counts: &[u64], bin_size: u32) -> RefSum
         .enumerate()
         .map(|(i, &c)| {
             let span = bin_span_len(i, n_bins, length, bin_size) as f64;
-            if span > 0.0 { c as f64 / span } else { 0.0 }
+            if span > 0.0 {
+                c as f64 / span
+            } else {
+                0.0
+            }
         })
         .collect();
 
@@ -84,8 +93,12 @@ fn ref_summary(name: &str, length: u32, counts: &[u64], bin_size: u32) -> RefSum
     let (mut min, mut max) = (f64::INFINITY, f64::NEG_INFINITY);
     let mut sumsq = 0.0;
     for &d in &depths {
-        if d < min { min = d; }
-        if d > max { max = d; }
+        if d < min {
+            min = d;
+        }
+        if d > max {
+            max = d;
+        }
         sumsq += (d - mean_depth).powi(2);
     }
     let stdev_depth = (sumsq / n_bins as f64).sqrt();
@@ -100,11 +113,21 @@ fn ref_summary(name: &str, length: u32, counts: &[u64], bin_size: u32) -> RefSum
     let mut c20 = 0usize;
     let mut c30 = 0usize;
     for &d in &depths {
-        if d >= 1.0 { c1 += 1; }
-        if d >= 5.0 { c5 += 1; }
-        if d >= 10.0 { c10 += 1; }
-        if d >= 20.0 { c20 += 1; }
-        if d >= 30.0 { c30 += 1; }
+        if d >= 1.0 {
+            c1 += 1;
+        }
+        if d >= 5.0 {
+            c5 += 1;
+        }
+        if d >= 10.0 {
+            c10 += 1;
+        }
+        if d >= 20.0 {
+            c20 += 1;
+        }
+        if d >= 30.0 {
+            c30 += 1;
+        }
     }
     let n = n_bins as f64;
 
