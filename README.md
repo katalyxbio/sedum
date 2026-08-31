@@ -151,6 +151,3 @@ CIGAR ops that consume reference and contribute to depth: `M`, `=`, `X`, `D`. CI
 - No region restriction flag yet (`--regions BED` is planned).
 - One BinMatrix shard per worker means memory scales with thread count. At 32 threads and 500 bp bins on a human genome, expect ~1.5 GB peak.
 
-## License
-
-Attribution-NonCommercial-NoDerivatives 4.0 International
