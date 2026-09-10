@@ -1,6 +1,6 @@
 # Sedum
 
-![Sedum Logo](resources/sedum_logo.png)
+![Sedum Logo](resources/sedum_logo.jpg)
 
 A fast, parallel per-bin depth calculator for aligned BAM files, written in Rust.
 

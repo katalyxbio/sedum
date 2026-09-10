@@ -51,6 +51,6 @@ Memory scales with thread count (one `BinMatrix` shard per worker, ~50 MB/worker
 
 ## Notes
 
-- Licensed **CC BY-NC-ND 4.0** (`license = "CC-BY-NC-ND-4.0"` in `Cargo.toml`, matching README/LICENSE). The LICENSE file is authoritative. `publish = false` — this is a private repo and cargo-dist is configured with no publish jobs.
+- Licensed **Apache License 2.0** (`license = "Apache-2.0"` in `Cargo.toml`, matching the LICENSE file). `publish = false` — this is a private repo and cargo-dist is configured with no publish jobs.
 - Not yet implemented (mentioned in README as planned): CRAM support, `--regions BED`. SAM and index-less BAM force the single-threaded path.
 - `PLAN.md` holds the original design doc.
